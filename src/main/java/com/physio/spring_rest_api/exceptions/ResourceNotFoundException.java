@@ -13,7 +13,7 @@ public class ResourceNotFoundException extends RuntimeException{
     UUID resourceId;
 
     public ResourceNotFoundException(String rName, String resourceFieldName, UUID rId){
-        super(String.format("%s not found with %s : %UUID", rName, resourceFieldName, rId));
+        super(String.format("%s not found with %s : %s", rName, resourceFieldName, rId));
         this.resourceName = rName;
         this.resourceFieldName = resourceFieldName;
         this.resourceId = rId;

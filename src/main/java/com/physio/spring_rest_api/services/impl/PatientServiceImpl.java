@@ -1,22 +1,33 @@
 package com.physio.spring_rest_api.services.impl;
 
 import com.physio.spring_rest_api.dto.PatientDTO;
+import com.physio.spring_rest_api.dto.response.ApiResponse;
+import com.physio.spring_rest_api.dto.response.PaginationApiResponse;
 import com.physio.spring_rest_api.entities.PatientsEntity;
 import com.physio.spring_rest_api.exceptions.AlreadyExistsException;
 import com.physio.spring_rest_api.exceptions.ResourceNotFoundException;
 import com.physio.spring_rest_api.repositories.PatientRepo;
 import com.physio.spring_rest_api.services.PatientService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class PatientServiceImpl implements PatientService {
 
     @Autowired
     private PatientRepo repo;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @Override
     public PatientDTO createPatient(PatientDTO patientDTO) {
@@ -34,39 +45,41 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
-    public List<PatientDTO> getAllPatients() {
-        List<PatientsEntity> patients = this.repo.findAll();
+    public PaginationApiResponse getAllPatients(int pageNumber, int pageSize) {
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<PatientsEntity> pagePatients = this.repo.findAll(pageable);
+
+        //List<PatientsEntity> patients = this.repo.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
 //        patients.stream().map(e -> {
 //            return this.entityTODto(e);
 //        }).toList();
-        List<PatientDTO> list = patients.stream().map(this::entityTODto).toList();
-        return list;
+        List<PatientDTO> list = pagePatients.getContent().stream().map(this::entityTODto).toList();
+        PaginationApiResponse response = new PaginationApiResponse();
+        response.setData(list);
+        response.setPageNumber(pagePatients.getNumber());
+        response.setPageSize(pagePatients.getSize());
+        response.setTotalElements(pagePatients.getTotalElements());
+        response.setTotalPages(pagePatients.getTotalPages());
+        response.setLastPage(pagePatients.isLast());
+
+        return response;
+    }
+
+    @Override
+    public List<PatientDTO> searchPatients(String keyword) {
+        List<PatientsEntity> patientsEntities = this.repo.findByMobileContaining(keyword);
+        List<PatientDTO> data = patientsEntities.stream().map((p) -> modelMapper.map(p, PatientDTO.class)).collect(Collectors.toList());
+        return data;
     }
 
 
     private PatientsEntity dtoTOEntity(PatientDTO dto){
-        PatientsEntity entity = new PatientsEntity();
-        entity.setName(dto.getName());
-        entity.setAge(dto.getAge());
-        entity.setGender(dto.getGender());
-        entity.setEmail(dto.getEmail());
-        entity.setAddress(dto.getAddress());
-        entity.setMobile(dto.getMobile());
-        entity.setCreatedAt(dto.getCreatedAt());
-        return entity;
+        return modelMapper.map(dto, PatientsEntity.class);
     }
 
     private PatientDTO entityTODto(PatientsEntity entity){
-        PatientDTO dto = new PatientDTO();
-        dto.setId(entity.getId());
-        dto.setName(entity.getName());
-        dto.setAge(entity.getAge());
-        dto.setGender(entity.getGender());
-        dto.setEmail(entity.getEmail());
-        dto.setAddress(entity.getAddress());
-        dto.setMobile(entity.getMobile());
-        dto.setCreatedAt(entity.getCreatedAt());
-        return dto;
+        return modelMapper.map(entity, PatientDTO.class);
     }
 
 }

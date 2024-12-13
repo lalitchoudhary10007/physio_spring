@@ -3,8 +3,6 @@ package com.physio.spring_rest_api.exceptions;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 public class AlreadyExistsException extends RuntimeException{

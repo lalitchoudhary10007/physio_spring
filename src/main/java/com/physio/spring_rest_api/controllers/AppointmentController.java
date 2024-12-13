@@ -1,6 +1,7 @@
 package com.physio.spring_rest_api.controllers;
 
 
+import com.physio.spring_rest_api.dto.response.ApiResponse;
 import com.physio.spring_rest_api.dto.AppointmentDTO;
 import com.physio.spring_rest_api.services.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +21,17 @@ public class AppointmentController {
     AppointmentService service;
 
     @PostMapping("/")
-    public ResponseEntity<AppointmentDTO> createAppointment(@RequestBody AppointmentDTO dto){
+    public ResponseEntity<ApiResponse<AppointmentDTO>> createAppointment(@RequestBody AppointmentDTO dto){
         dto.setCreatedAt(LocalDateTime.now());
         AppointmentDTO createdDto = service.createAppointment(dto);
-        return new ResponseEntity<>(createdDto, HttpStatus.CREATED);
+        return new ResponseEntity<>(
+                new ApiResponse<>(
+                        true,
+                        "Appointment Created Successfully",
+                        HttpStatus.CREATED.value(),
+                        createdDto),
+                HttpStatus.CREATED);
+       // return new ResponseEntity<>(createdDto, HttpStatus.CREATED);
     }
 
     @GetMapping(path = "/")
@@ -34,8 +42,15 @@ public class AppointmentController {
     }
 
     @GetMapping(path = "/{patientId}")
-    public ResponseEntity<List<AppointmentDTO>> getAppointments(@PathVariable("patientId") UUID id){
-        return new ResponseEntity<>(service.getAllPatientAppointments(id), HttpStatus.OK);
+    public ResponseEntity<ApiResponse<List<AppointmentDTO>>> getAppointments(@PathVariable("patientId") UUID id){
+        return new ResponseEntity<>(
+                new ApiResponse<>(
+                        true,
+                        "Success",
+                        HttpStatus.OK.value(),
+                        service.getAllPatientAppointments(id)),
+                HttpStatus.OK);
+        //return new ResponseEntity<>(service.getAllPatientAppointments(id), HttpStatus.OK);
     }
 
 
